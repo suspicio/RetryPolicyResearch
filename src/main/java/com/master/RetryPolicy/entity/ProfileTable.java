@@ -7,15 +7,15 @@ import java.time.LocalDate;
 import java.util.UUID;
 
 @Table
-public class DummyTable {
+public class ProfileTable {
     @PrimaryKey
-    private UUID id;
-    private String name;
-    private String surname;
-    private String email;
-    private LocalDate birthday;
+    private final UUID id;
+    private final String name;
+    private final String surname;
+    private final String email;
+    private final LocalDate birthday;
 
-    public DummyTable(UUID id, String name, String surname, String email, LocalDate birthday) {
+    public ProfileTable(UUID id, String name, String surname, String email, LocalDate birthday) {
         this.id = id;
         this.name = name;
         this.surname = surname;
