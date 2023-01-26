@@ -1,30 +1,36 @@
 package com.master.RetryPolicy.service;
 
+import com.datastax.oss.driver.api.core.cql.Row;
 import com.datastax.oss.driver.internal.core.cql.DefaultRow;
-import com.master.RetryPolicy.entity.ProfileTable;
+import com.fasterxml.jackson.annotation.JsonFormat;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.master.RetryPolicy.entity.Profile;
 import com.master.RetryPolicy.repository.ProfileTableRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.scheduling.annotation.Async;
+import org.springframework.scheduling.annotation.AsyncResult;
 import org.springframework.scheduling.annotation.EnableAsync;
 import org.springframework.stereotype.Service;
 
 import java.util.*;
+import java.util.concurrent.Future;
+import java.util.function.Consumer;
 
 @EnableAsync
+@Async
 @Service
 public class ProfileTableService {
     @Autowired
     private ProfileTableRepository profileTableRepository;
-    public UUID createProfile(ProfileTable profileTable) {
+
+    public Future<UUID> createProfile(Profile profile) {
         long startTime = System.nanoTime();
         try {
-            ProfileTable profileTableNew = new ProfileTable(UUID.randomUUID(), profileTable.getName(),
-                    profileTable.getSurname(), profileTable.getEmail(),
-                    profileTable.getBirthday());
-            profileTableRepository.save(profileTableNew);
+            profileTableRepository.save(profile);
             long endTime = System.nanoTime();
             long responseTime = (endTime - startTime) / 1000000;
             System.out.println("Response time Save: " + responseTime + "ms");
-            return profileTable.getId();
+            return new AsyncResult<>(profile.getId());
         } catch (Exception e) {
             long endTime = System.nanoTime();
             long responseTime = (endTime - startTime) / 1000000;
@@ -34,7 +40,7 @@ public class ProfileTableService {
         }
     }
 
-    public long countProfile() {
+    public Future<Long> countProfile() {
         long startTime = System.nanoTime();
         long count = -1;
         try {
@@ -45,42 +51,62 @@ public class ProfileTableService {
         long endTime = System.nanoTime();
         long responseTime = (endTime - startTime) / 1000000;
         System.out.println("Response time COUNT: " + responseTime + "ms\nResponse: " + count);
-        return count;
+        return new AsyncResult<>(count);
     }
 
-    public String getProfile(UUID id) {
+    public Future<JsonNode> getProfile(UUID id) {
         long startTime = System.nanoTime();
-        Optional<ProfileTable> resp = Optional.empty();
+        Iterable<Profile> resp = null;
+        final JsonNode[] respJson = new JsonNode[1];
         try {
-            resp = profileTableRepository.findById(id);
+            System.out.println("ID: " + id);
+            resp = profileTableRepository.findProfileById(id);
+            long endTime = System.nanoTime();
+            long responseTime = (endTime - startTime) / 1000000;
+            System.out.println("Response time Read: " + responseTime);
+            Consumer<Profile> printInner = profile -> respJson[0] = profile.toJSON();
+            resp.forEach(printInner);
         } catch (Exception e) {
+            long endTime = System.nanoTime();
+            long responseTime = (endTime - startTime) / 1000000;
+            System.out.println("Response time Read: " + responseTime);
             System.err.println(e);
         }
-        long endTime = System.nanoTime();
-        long responseTime = (endTime - startTime) / 1000000;
-        System.out.print("Response time Read: " + responseTime);
-        return resp.map(ProfileTable::toString).orElse(null);
+
+        if (resp != null) {
+            return new AsyncResult<>(respJson[0]);
+        }
+
+        return new AsyncResult<>(null);
     }
 
-    public Boolean updateProfile(UUID id, ProfileTable profile) {
+    public Future<Boolean> updateProfile(UUID id, Profile profile) {
         long startTime = System.nanoTime();
 
         try {
             DefaultRow df = profileTableRepository.updateProfile(id, profile.getName(), profile.getSurname(), profile.getEmail(), profile.getBirthday());
             long endTime = System.nanoTime();
             long responseTime = (endTime - startTime) / 1000000;
-            System.out.println("Response time Update: " + responseTime + "ms\nResponse: " + df);
-            return true;
+            System.out.print("Response time Update: " + responseTime + "ms\nResponse: ");
+            boolean response = true;
+            for (int i = 0; i < ((Row) df).getColumnDefinitions().size(); i++) {
+                String columnName = ((Row) df).getColumnDefinitions().get(i).getName().toString();
+                Object columnValue = df.getObject(i);
+                assert columnValue != null;
+                response = Boolean.parseBoolean(columnValue.toString());
+                System.out.println(columnName + ": " + columnValue);
+            }
+            return new AsyncResult<>(response);
         } catch (Exception e) {
             long endTime = System.nanoTime();
             long responseTime = (endTime - startTime) / 1000000;
             System.out.println("Response time Update: " + responseTime + "ms");
             System.err.println(e);
-            return false;
+            return new AsyncResult<>(false);
         }
     }
 
-    public boolean deleteProfile(UUID id) {
+    public Future<Boolean> deleteProfile(UUID id) {
         long startTime = System.nanoTime();
         boolean resp = true;
         try {
@@ -93,6 +119,6 @@ public class ProfileTableService {
         long responseTime = (endTime - startTime) / 1000000;
         System.out.print("Response time Read: " + responseTime);
 
-        return resp;
+        return new AsyncResult<>(resp);
     }
 }
