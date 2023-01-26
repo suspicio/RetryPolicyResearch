@@ -2,7 +2,6 @@ package com.master.RetryPolicy.service;
 
 import com.datastax.oss.driver.api.core.cql.Row;
 import com.datastax.oss.driver.internal.core.cql.DefaultRow;
-import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.master.RetryPolicy.entity.Profile;
 import com.master.RetryPolicy.repository.ProfileTableRepository;
