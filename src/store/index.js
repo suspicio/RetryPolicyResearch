@@ -4,19 +4,12 @@ import axios from "axios";
 const store = createStore({
     state: {
         profile: {},
+        profilesIds: [],
         configs: [],
         selectedConfig: {}
     },
 
     mutations: {
-        setProfile(state, newProfile) {
-            state.profile = newProfile
-        },
-
-        setConfigs(state, newConfigs) {
-            state.configs = newConfigs
-        },
-
         appendConfigs(state, newConfig) {
             state.configs.push(newConfig);
         },
@@ -25,9 +18,21 @@ const store = createStore({
             state.configs = state.configs.filter(conf => conf.id !== id)
         },
 
+        setProfile(state, newProfile) {
+            state.profile = newProfile
+        },
+
+        setProfilesIds(state, profilesIds) {
+            state.profilesIds = profilesIds
+        },
+
+        setConfigs(state, newConfigs) {
+            state.configs = newConfigs
+        },
+
         setSelectedConfig(state, config) {
             state.selectedConfig = config
-        }
+        },
     },
 
     actions: {
@@ -54,6 +59,16 @@ const store = createStore({
             })
         },
 
+        getProfilesIds(state) {
+            return axios.get(process.env.VUE_APP_API_URL + "/profile/ids").then((resp) => {
+                state.commit('setProfilesIds', resp.data)
+                return true;
+            }).catch((reason) => {
+                console.error(reason)
+                return false;
+            })
+        },
+
         deleteConfig(state, id) {
             return axios.delete(process.env.VUE_APP_API_URL + "/configs/" + id).then((resp) => {
                 state.commit('deleteConfig', id);
@@ -73,6 +88,10 @@ const store = createStore({
     getters: {
         getConfigs(state) {
             return state.configs
+        },
+
+        getProfileWithIndex(state, idx) {
+            return state.profilesIds[idx]
         }
     }
 })

@@ -20,9 +20,10 @@ export default {
   components: {ConfigurationList, NewConfiguration},
   created() {
     this.getConfigs();
+    this.getProfilesIds();
   },
   methods: {
-    ...mapActions(['getConfigs'])
+    ...mapActions(['getConfigs', 'getProfilesIds'])
   }
 }
 </script>
