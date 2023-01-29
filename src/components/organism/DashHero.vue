@@ -1,20 +1,32 @@
 <template>
-  <div>Hero Component</div>
+  <div class="wrapper">
+    <div class="header">
+      <h1>Retry Policy Testing Environment</h1>
+    </div>
+    <div class="right-toolbar">
+      <NewConfiguration />
+      <ConfigurationList />
+    </div>
+  </div>
 </template>
 
 <script>
-import axios from "axios"
+import NewConfiguration from "@/components/shared/molecules/new-configuration";
+import {mapActions} from "vuex";
+import ConfigurationList from "@/components/shared/molecules/configurations";
 
 export default {
   name: "DashHero",
+  components: {ConfigurationList, NewConfiguration},
   created() {
-    axios.get("http://127.0.0.1:8080/profile/count").then((resp) => {
-      console.log(resp)
-    })
+    this.getConfigs();
+  },
+  methods: {
+    ...mapActions(['getConfigs'])
   }
 }
 </script>
 
-<style scoped>
+<style lang="scss" src="./index.scss">
 
 </style>
