@@ -8,6 +8,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
@@ -20,10 +21,17 @@ public class ProfileTableController {
 
 
     @GetMapping("/profile/{id}")
-    public ResponseEntity<JsonNode> getItem(@PathVariable UUID id) throws ExecutionException, InterruptedException {
+    public ResponseEntity<JsonNode> getProfile(@PathVariable UUID id) throws ExecutionException, InterruptedException {
         Future<JsonNode> profileTable = profileTableService.getProfile(id);
         JsonNode profileTableResp = profileTable.get();
         return new ResponseEntity<>(profileTableResp, HttpStatus.OK);
+    }
+
+    @GetMapping("/profile/ids")
+    public ResponseEntity<List<String>> getProfilesIds() throws ExecutionException, InterruptedException {
+        Future<List<String>> profilesIds = profileTableService.getProfilesIds();
+        List<String> profileIdsResp = profilesIds.get();
+        return new ResponseEntity<>(profileIdsResp, HttpStatus.OK);
     }
 
     @GetMapping("/profile/count")
@@ -49,7 +57,7 @@ public class ProfileTableController {
     }
 
     @PutMapping("/profile")
-    public ResponseEntity<Boolean> updateItem(@RequestBody Profile item) throws ExecutionException, InterruptedException {
+    public ResponseEntity<Boolean> updateProfile(@RequestBody Profile item) throws ExecutionException, InterruptedException {
         Future<Boolean> updatedProfile = profileTableService.updateProfile(item.getId(), item);
         Boolean updatedProfileSuccess = updatedProfile.get();
         if (updatedProfileSuccess) {

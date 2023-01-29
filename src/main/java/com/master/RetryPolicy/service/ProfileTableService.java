@@ -63,8 +63,8 @@ public class ProfileTableService {
             long endTime = System.nanoTime();
             long responseTime = (endTime - startTime) / 1000000;
             System.out.println("Response time Read: " + responseTime);
-            Consumer<Profile> printInner = profile -> respJson[0] = profile.toJSON();
-            resp.forEach(printInner);
+            Consumer<Profile> collectInner = profile -> respJson[0] = profile.toJSON();
+            resp.forEach(collectInner);
         } catch (Exception e) {
             long endTime = System.nanoTime();
             long responseTime = (endTime - startTime) / 1000000;
@@ -77,6 +77,20 @@ public class ProfileTableService {
         }
 
         return new AsyncResult<>(null);
+    }
+
+    public Future<List<String>> getProfilesIds() {
+        List<Profile> resp;
+        final List<String> respList = new ArrayList<>();
+        try {
+            resp = profileTableRepository.findAll();
+            Consumer<Profile> collectInner = df -> respList.add(df.getId().toString());
+            resp.forEach(collectInner);
+        } catch (Exception e) {
+            System.err.println(e);
+        }
+
+        return new AsyncResult<>(respList);
     }
 
     public Future<Boolean> updateProfile(UUID id, Profile profile) {
