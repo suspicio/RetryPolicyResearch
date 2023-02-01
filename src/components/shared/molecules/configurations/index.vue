@@ -11,6 +11,9 @@
             Retry Policy: <span>{{configs["retry-policy-type"]}}</span>
           </div>
           <div class="list-element">
+            Count Limit: <span>{{configs["count-limit"]}}</span>
+          </div>
+          <div class="list-element">
             <v-btn
                 v-if="selectedID !== configs.id"
                    @click="selectConfig(configs.id)"
@@ -43,6 +46,7 @@
 <script>
 import 'vue3-toastify/dist/index.css';
 import {mapActions, mapGetters} from "vuex";
+import {toast} from "vue3-toastify";
 
 export default {
   name: "ConfigurationList",
@@ -58,9 +62,17 @@ export default {
   },
   methods: {
     ...mapActions(['deleteConfig', 'setSelectedConfig']),
-    ...mapGetters(['getConfigs']),
+    ...mapGetters(['getConfigs', 'getTestingState']),
+
+    checkForState() {
+      return this.getTestingState() !== "stop";
+    },
 
     deleteConf(id) {
+      if (this.checkForState()) {
+        toast.error('Configs changes forbidden during run, please stop testing')
+        return
+      }
       if (id === this.selectedID) {
         this.unselectConfig();
       }
@@ -68,13 +80,21 @@ export default {
     },
 
     selectConfig(id) {
+      if (this.checkForState()) {
+        toast.error('Configs changes forbidden during run, please stop testing')
+        return
+      }
       this.selectedID = id
       this.setSelectedConfig(this.configsList.filter((config) => config.id === id)[0])
     },
 
     unselectConfig() {
+      if (this.checkForState()) {
+        toast.error('Configs changes forbidden during run, please stop testing')
+        return
+      }
       this.selectedID = ''
-      this.setSelectedConfig({})
+      this.setSelectedConfig(null)
     }
   }
 }
