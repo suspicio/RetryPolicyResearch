@@ -57,8 +57,8 @@ public class ProfileTableController {
     }
 
     @PutMapping("/profile")
-    public ResponseEntity<Boolean> updateProfile(@RequestBody Profile item) throws ExecutionException, InterruptedException {
-        Future<Boolean> updatedProfile = profileTableService.updateProfile(item.getId(), item);
+    public ResponseEntity<Boolean> updateProfile(@RequestBody Profile profile) throws ExecutionException, InterruptedException {
+        Future<Boolean> updatedProfile = profileTableService.updateProfile(profile.getId(), profile);
         Boolean updatedProfileSuccess = updatedProfile.get();
         if (updatedProfileSuccess) {
             return new ResponseEntity<>(true, HttpStatus.OK);
@@ -68,7 +68,7 @@ public class ProfileTableController {
     }
 
     @DeleteMapping("/profile/{id}")
-    public ResponseEntity<Boolean> deleteItem(@PathVariable UUID id) throws ExecutionException, InterruptedException {
+    public ResponseEntity<Boolean> deleteProfile(@PathVariable UUID id) throws ExecutionException, InterruptedException {
         Future<Boolean> deletedProfile = profileTableService.deleteProfile(id);
         Boolean deletedProfileSuccess = deletedProfile.get();
         if (deletedProfileSuccess) {

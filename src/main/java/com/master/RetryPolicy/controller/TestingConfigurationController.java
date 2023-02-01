@@ -37,7 +37,7 @@ public class TestingConfigurationController {
     }
 
     @DeleteMapping("/configs/{id}")
-    public ResponseEntity<Boolean> deleteItem(@PathVariable UUID id) throws ExecutionException, InterruptedException {
+    public ResponseEntity<Boolean> deleteConfig(@PathVariable UUID id) throws ExecutionException, InterruptedException {
         Future<Boolean> deleteTestingConfiguration = testingConfigurationService.deleteTestingConfiguration(id);
         Boolean deletedProfileSuccess = deleteTestingConfiguration.get();
         if (deletedProfileSuccess) {

@@ -22,11 +22,14 @@ public class TestingConfiguration {
 
     private final String retryPolicyType;
 
+    private final Integer countLimit;
+
     @PersistenceCreator
-    public TestingConfiguration(UUID id, Integer requestPerSecond, String retryPolicyType) {
+    public TestingConfiguration(UUID id, Integer requestPerSecond, String retryPolicyType, Integer countLimit) {
         this.id = id;
         this.requestPerSecond = requestPerSecond;
         this.retryPolicyType = retryPolicyType;
+        this.countLimit = countLimit;
     }
 
     public UUID getId() {
@@ -40,12 +43,16 @@ public class TestingConfiguration {
     public String getRetryPolicyType() {
         return retryPolicyType;
     }
+    public Integer getCountLimit() {
+        return countLimit;
+    }
 
     @JsonCreator
     public TestingConfiguration(
             @JsonProperty("id") String id,
             @JsonProperty("request-per-second") String requestPerSecond,
-            @JsonProperty("retry-policy-type") String retryPolicyType
+            @JsonProperty("retry-policy-type") String retryPolicyType,
+            @JsonProperty("count-limit") String countLimit
     ) {
         if (Objects.equals(id, "")) {
             this.id = UUID.randomUUID();
@@ -55,6 +62,7 @@ public class TestingConfiguration {
         }
         this.requestPerSecond = Integer.parseInt(requestPerSecond);
         this.retryPolicyType = retryPolicyType;
+        this.countLimit = Integer.parseInt(countLimit);
     }
 
     public String toString() {
@@ -62,6 +70,7 @@ public class TestingConfiguration {
                 "ID='" + id + "',\n" +
                 "requestsPerSecond='" + requestPerSecond + "',\n" +
                 "retryPolicyType='" + retryPolicyType + "',\n" +
+                "countLimit='" + countLimit + "',\n" +
                 "}\n";
     }
 
@@ -71,6 +80,7 @@ public class TestingConfiguration {
         json.put("id", id.toString());
         json.put("request-per-second", requestPerSecond);
         json.put("retry-policy-type", retryPolicyType);
+        json.put("count-limit", countLimit);
         return json;
     }
 }
