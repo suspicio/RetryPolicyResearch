@@ -11,6 +11,7 @@ import org.springframework.scheduling.annotation.AsyncResult;
 import org.springframework.scheduling.annotation.EnableAsync;
 import org.springframework.stereotype.Service;
 
+import javax.annotation.PostConstruct;
 import java.util.*;
 import java.util.concurrent.Future;
 import java.util.function.Consumer;
@@ -21,6 +22,11 @@ import java.util.function.Consumer;
 public class ProfileTableService {
     @Autowired
     private ProfileTableRepository profileTableRepository;
+
+    @PostConstruct
+    private void deleteAll() {
+        profileTableRepository.deleteAll();
+    }
 
     public Future<UUID> createProfile(Profile profile) {
         long startTime = System.nanoTime();
