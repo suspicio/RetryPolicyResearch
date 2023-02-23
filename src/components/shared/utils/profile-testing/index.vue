@@ -18,6 +18,7 @@ export default {
   watch: {
     testingState(newState, oldState) {
       if (newState === 'run' && oldState === 'stop') {
+        this.resetAll()
         this.test();
       }
     }
@@ -37,7 +38,7 @@ export default {
   },
   methods: {
     ...mapGetters(['getTestingState', 'getSelectedConfigs', 'getCountOfProfiles']),
-    ...mapActions(['createRandomProfile', 'updateRandomProfile', 'deleteRandomProfile', 'getRandomProfile', 'getProfilesCount']),
+    ...mapActions(['createRandomProfile', 'updateRandomProfile', 'deleteRandomProfile', 'getRandomProfile', 'getProfilesCount', 'resetAll']),
 
     randomIntFromInterval(min, max) { // min and max included
       return Math.floor(Math.random() * (max - min + 1) + min)

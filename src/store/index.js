@@ -1,10 +1,26 @@
-import { createStore } from 'vuex'
+import {createStore} from 'vuex'
 import axiosCreate from "axios";
-import { generateRandomProfiles } from "@/components/shared/utils/random-profile-generation/random-profile-generation";
+import {generateRandomProfiles} from "@/components/shared/utils/random-profile-generation/random-profile-generation";
+import * as process from "process";
 
 const axios = axiosCreate.create({
     timeout: 20000,
 });
+
+axios.interceptors.request.use((config) => {
+    config.headers['request-start-time'] = Date.now();
+    config.headers['is-retry'] = true
+    return config
+})
+
+axios.interceptors.response.use((response) => {
+    const start = response.config.headers['request-start-time']
+    response.headers['request-duration'] = Date.now() - start
+    return response
+})
+
+let requestTimeData = {}
+let totalRequestCount = {}
 
 const store = createStore({
     state: {
@@ -12,7 +28,9 @@ const store = createStore({
         profilesIds: [],
         configs: [],
         selectedConfig: null,
-        testingState: "stop"
+        testingState: "stop",
+        requestsTime: [],
+        initTime: Date.now()
     },
 
     mutations: {
@@ -51,6 +69,31 @@ const store = createStore({
         setTestingState(state, testingState) {
             state.testingState = testingState
         },
+
+        addStats(state, resp) {
+            let reqDuration = 0;
+
+            if (resp.headers?.['request-duration']) {
+                reqDuration = resp.headers['request-duration']
+            } else {
+                reqDuration = Date.now() - resp.config.headers['request-start-time']
+            }
+
+            const timeSlot = Math.floor((parseFloat(resp.config.headers['request-start-time']) - state.initTime) / 1000)
+            if (!requestTimeData?.[timeSlot])
+                requestTimeData[timeSlot] = {
+                    total: 0,
+                    n: 0
+                }
+            requestTimeData[timeSlot].total = reqDuration + requestTimeData[timeSlot].total
+            requestTimeData[timeSlot].n = requestTimeData[timeSlot].n + 1
+
+            if (totalRequestCount?.[`${resp.status}`]) {
+                totalRequestCount[`${resp.status}`]++;
+            } else {
+                totalRequestCount[`${resp.status}`] = 1;
+            }
+        },
     },
 
     actions: {
@@ -61,27 +104,41 @@ const store = createStore({
                     id: resp.data,
                 });
                 return true
-            }).catch((reason) => {
-                console.error(reason);
+            }).catch(() => {
+                //console.error(reason);
                 return false;
             })
         },
 
-        createRandomProfile(state) {
+        createRandomProfile({commit}) {
             const newProfile = {
                 "id": "",
                 ...generateRandomProfiles()
             }
             return axios.post(process.env.VUE_APP_API_URL + "/profile", newProfile).then((resp) => {
-                state.commit('appendProfileId', resp.data);
+                commit('appendProfileId', resp.data);
+                commit('addStats', resp)
                 return true
             }).catch((reason) => {
-                console.error(reason);
+                //console.error(reason);
+                if (reason?.response) {
+                    commit('addStats', reason.response)
+                } else {
+                    commit('addStats', {
+                        "headers": {
+                            "request-duration": 20000
+                        },
+                        "config": {
+                            "headers": {"request-start-time": Date.now() - 20000}
+                        },
+                        "status": 504
+                    })
+                }
                 return false;
             })
         },
 
-        updateRandomProfile({state}) {
+        updateRandomProfile({state, commit}) {
             if (state.profilesIds.length === 0)
                 return false;
             const profileIdIndex = Math.floor(Math.random() * state.profilesIds.length)
@@ -90,22 +147,49 @@ const store = createStore({
                 ...generateRandomProfiles()
             }
             return axios.put(process.env.VUE_APP_API_URL + "/profile", newProfile).then((resp) => {
+                commit('addStats', resp)
                 return resp.data
             }).catch((reason) => {
-                console.error(reason);
+                //console.error(reason);
+                if (reason?.response) {
+                    commit('addStats', reason.response)
+                } else {
+                    commit('addStats', {
+                        "headers": {
+                            "request-duration": 20000
+                        },
+                        "config": {
+                            "headers": {"request-start-time": Date.now() - 20000}
+                        },
+                        "status": 504
+                    })
+                }
                 return false;
             })
         },
 
-        getRandomProfile({state}) {
+        getRandomProfile({state, commit}) {
             if (state.profilesIds.length === 0)
                 return false;
             const profileIdIndex = Math.floor(Math.random() * state.profilesIds.length)
             return axios.get(process.env.VUE_APP_API_URL + `/profile/${state.profilesIds.at(profileIdIndex)}`).then((resp) => {
-                console.log(resp.status)
+                commit('addStats', resp)
                 return true;
             }).catch((reason) => {
-                console.error(reason)
+                //console.error(reason)
+                if (reason?.response) {
+                    commit('addStats', reason.response)
+                } else {
+                    commit('addStats', {
+                        "headers": {
+                            "request-duration": 20000
+                        },
+                        "config": {
+                            "headers": {"request-start-time": Date.now() - 20000}
+                        },
+                        "status": 504
+                    })
+                }
                 return false;
             })
         },
@@ -114,29 +198,41 @@ const store = createStore({
             return axios.get(process.env.VUE_APP_API_URL + "/configs").then((resp) => {
                 state.commit('setConfigs', resp.data?.['configs'])
                 return true;
-            }).catch((reason) => {
-                console.error(reason)
+            }).catch(() => {
+                //console.error(reason)
                 return false;
             })
         },
 
         getProfilesIds(state) {
             return axios.get(process.env.VUE_APP_API_URL + "/profile/ids").then((resp) => {
-                console.log(resp);
                 state.commit('setProfilesIds', resp.data)
                 return true;
-            }).catch((reason) => {
-                console.error(reason)
+            }).catch(() => {
+                //console.error(reason)
                 return false;
             })
         },
 
-        getProfilesCount() {
+        getProfilesCount({commit}) {
             return axios.get(process.env.VUE_APP_API_URL + "/profile/count").then((resp) => {
-                console.log(resp.data)
+                commit('addStats', resp)
                 return true;
             }).catch((reason) => {
-                console.error(reason)
+                //console.error(reason)
+                if (reason?.response) {
+                    commit('addStats', reason.response)
+                } else {
+                    commit('addStats', {
+                        "headers": {
+                            "request-duration": 20000
+                        },
+                        "config": {
+                            "headers": {"request-start-time": Date.now() - 20000}
+                        },
+                        "status": 504
+                    })
+                }
                 return false;
             })
         },
@@ -145,8 +241,8 @@ const store = createStore({
             return axios.delete(process.env.VUE_APP_API_URL + "/configs/" + id).then((resp) => {
                 state.commit('deleteConfig', id);
                 return resp;
-            }).catch((reason) => {
-                console.error(reason)
+            }).catch(() => {
+                //console.error(reason)
                 return false
             })
 
@@ -158,10 +254,23 @@ const store = createStore({
             const profileIdIndex = Math.floor(Math.random() * state.profilesIds.length)
             return axios.delete(process.env.VUE_APP_API_URL + `/profile/${state.profilesIds.at(profileIdIndex)}`).then((resp) => {
                 commit('deleteProfileId', profileIdIndex)
-                console.log(resp.status)
+                commit('addStats', resp)
                 return true;
             }).catch((reason) => {
-                console.error(reason)
+                //console.error(reason)
+                if (reason?.response) {
+                    commit('addStats', reason.response)
+                } else {
+                    commit('addStats', {
+                        "headers": {
+                            "request-duration": 20000
+                        },
+                        "config": {
+                            "headers": {"request-start-time": Date.now() - 20000}
+                        },
+                        "status": 504
+                    })
+                }
                 return false;
             })
         },
@@ -172,16 +281,46 @@ const store = createStore({
 
         setTestingState(state, testingState) {
             state.commit('setTestingState', testingState);
+        },
+
+        getRequestsTime({state}) {
+            return state.requestsTime
+        },
+
+        resetAll({state}) {
+            state.requestsTime = []
+            requestTimeData = {}
+            state.initTime = Date.now()
+            totalRequestCount = {}
+        },
+
+        getTimeEntry({state}) {
+            state.requestsTime = Object.keys(requestTimeData).map((key) => {
+                return {
+                    "x": key,
+                    "y": requestTimeData[key].total / requestTimeData[key].n
+                }
+            })
+            return state.requestsTime
+        },
+
+        getRespEntry() {
+            return totalRequestCount
         }
     },
 
     getters: {
+
+        getRequestCount() {
+            return totalRequestCount
+        },
+
         getConfigs(state) {
             return state.configs
         },
 
         getSelectedConfigs(state) {
-          return state.selectedConfig
+            return state.selectedConfig
         },
 
         getProfileWithIndex(state, idx) {
@@ -194,7 +333,7 @@ const store = createStore({
 
         getCountOfProfiles(state) {
             return state.profilesIds.length
-        }
+        },
     }
 })
 

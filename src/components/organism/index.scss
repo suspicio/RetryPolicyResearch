@@ -12,9 +12,36 @@
   flex-direction: column;
 }
 
-.right-toolbar {
-  max-width: 400px;
-  min-width: 400px;
-  align-self: flex-end;
-  margin: 0 20px
+.toolbar {
+  max-width: 1300px;
+  width: 100%;
+  margin: 50px 20px 0;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+
+  &-element {
+    align-self: flex-start;
+    width: 100%;
+  }
+}
+
+.wrapper-top-element {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+}
+
+.v-expansion-panel-text {
+  overflow: auto;
+  max-height: 500px;
+}
+
+.graph-wrapper {
+  display: flex;
+  justify-content: flex-start;
+  align-items: flex-start;
+  align-self: flex-start;
+  width: 100%;
 }
