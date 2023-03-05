@@ -1,5 +1,6 @@
 package com.master.RetryPolicy.service;
 
+import ch.qos.logback.core.encoder.EchoEncoder;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.master.RetryPolicy.entity.TestingConfiguration;
 import com.master.RetryPolicy.repository.TestingConfigurationRepository;
@@ -12,6 +13,7 @@ import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.Future;
 import java.util.function.Consumer;
@@ -28,6 +30,16 @@ public class TestingConfigurationService {
         try {
             testingConfigurationRepository.save(testingConfiguration);
             return new AsyncResult<>(testingConfiguration.getId());
+        } catch (Exception e) {
+            System.err.println(e);
+            return null;
+        }
+    }
+
+    public Future<TestingConfiguration> selectTestingConfiguration(UUID id) {
+        try {
+            Optional<TestingConfiguration> testingConfiguration = testingConfigurationRepository.findById(id);
+            return testingConfiguration.<Future<TestingConfiguration>>map(AsyncResult::new).orElseGet(() -> new AsyncResult<>(null));
         } catch (Exception e) {
             System.err.println(e);
             return null;
