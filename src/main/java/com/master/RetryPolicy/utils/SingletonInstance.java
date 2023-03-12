@@ -5,6 +5,7 @@ import com.master.RetryPolicy.entity.TestingConfiguration;
 import com.master.RetryPolicy.entity.TestingStates;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
@@ -12,7 +13,7 @@ public class SingletonInstance {
     public static TestingConfiguration testingConfiguration = null;
     public static TestingStates testingState = TestingStates.STOP;
     public static TestingStates lastTestingState = TestingStates.STOP;
-    public static List<UUID> listOfAllIds;
+    public static List<UUID> listOfAllIds = new ArrayList<>();
 
     public static @NotNull Boolean stateChanged() {
         if (testingState != lastTestingState) {
@@ -24,6 +25,8 @@ public class SingletonInstance {
     }
 
     public static @NotNull UUID getRandomUUID() {
+        if (listOfAllIds.size() == 0)
+            return UUID.randomUUID();
         return listOfAllIds.get((int) Math.floor(Math.random() * listOfAllIds.size()));
     }
 }

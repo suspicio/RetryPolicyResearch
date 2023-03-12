@@ -7,9 +7,11 @@ import com.master.RetryPolicy.utils.ProfileGenerator;
 import com.master.RetryPolicy.utils.SetTimeout;
 import com.master.RetryPolicy.utils.SingletonInstance;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.client.reactive.ReactorClientHttpConnector;
+import org.springframework.http.codec.json.Jackson2JsonEncoder;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.scheduling.annotation.AsyncResult;
 import org.springframework.scheduling.annotation.EnableAsync;
@@ -45,7 +47,9 @@ public class ProfileRequesterService {
     public ProfileRequesterService(WebClient.Builder webClientBuilder) {
         this.webClient = webClientBuilder.clientConnector(
                 new ReactorClientHttpConnector(HttpClient.create().responseTimeout(Duration.ofSeconds(20)))
-        ).build();
+        )
+                .codecs(configurer -> configurer.defaultCodecs().jackson2JsonEncoder(new Jackson2JsonEncoder()))
+                .build();
         this.testingStats = new TestingStats();
     }
 
@@ -122,15 +126,17 @@ public class ProfileRequesterService {
     }
 
     public void createProfile() {
+        System.out.println("Started UUID Creation");
         webClient.post()
                 .uri(apiUrl + "/profile")
                 .header("is-retry", "false")
+                .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
                 .bodyValue(ProfileGenerator.generateRandomProfile())
                 .accept(MediaType.APPLICATION_JSON)
                 .retrieve()
                 .bodyToMono(UUID.class)
                 .subscribe(profileTableResp -> {
-                    System.out.println("Received response: " + profileTableResp);
+                    System.out.println("Received response UUID: " + profileTableResp);
                 });
     }
 
@@ -138,6 +144,7 @@ public class ProfileRequesterService {
         webClient.put()
                 .uri(apiUrl + "/profile")
                 .header("is-retry", "false")
+                .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
                 .bodyValue(ProfileGenerator.generateRandomProfileWithID(SingletonInstance.getRandomUUID()))
                 .accept(MediaType.APPLICATION_JSON)
                 .retrieve()

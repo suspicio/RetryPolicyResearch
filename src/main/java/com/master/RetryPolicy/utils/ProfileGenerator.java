@@ -18,9 +18,9 @@ public class ProfileGenerator {
         int randomDay = random.nextInt(29) + 1;
         int randomMonth = random.nextInt(12) + 1;
         int randomYear = random.nextInt(50) + 1950;
-        LocalDate randomBirthday = LocalDate.of(randomYear, randomMonth, randomDay);
+        String randomBirthday = Integer.toString(randomDay) + '/' + randomMonth + '/' + randomYear;
 
-        return new Profile(UUID.fromString(""), randomFirstName, randomLastName, randomEmail, randomBirthday);
+        return new Profile(UUID.fromString("00000000-0000-0000-0000-000000000000"), randomFirstName, randomLastName, randomEmail, randomBirthday);
     }
 
     public static @NotNull Profile generateRandomProfileWithID(UUID id) {
