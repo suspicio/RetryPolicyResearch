@@ -11,6 +11,11 @@
         <ScatterGraphics />
       </div>
     </div>
+    <div class="wrapper-top-element">
+      <div class="graph-wrapper">
+        <SuccessRateGraph />
+      </div>
+    </div>
     <div class="toolbar">
       <div class="toolbar-element">
         <NewConfiguration />
@@ -23,15 +28,13 @@
       </div>
     </div>
   </div>
-  <ProfileTesting />
 </template>
 
 <script>
 import NewConfiguration from "@/components/shared/molecules/new-configuration";
-import {mapActions, mapGetters} from "vuex";
+import {mapActions} from "vuex";
 import ConfigurationList from "@/components/shared/molecules/configurations";
 import TestingSystem from "@/components/shared/molecules/testing-system";
-import ProfileTesting from "@/components/shared/utils/profile-testing";
 import {
   Chart as ChartJS,
   Title,
@@ -43,22 +46,44 @@ import {
 } from 'chart.js'
 import { Bar } from 'vue-chartjs'
 import ScatterGraphics from "@/components/shared/molecules/graphics/ScatterGraphics";
+import SuccessRateGraph from "@/components/shared/molecules/graphics/SuccessRateGraph";
 
 ChartJS.register(CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend)
 
 export default {
   name: "DashHero",
-  components: {ScatterGraphics, ProfileTesting, TestingSystem, ConfigurationList, NewConfiguration, Bar},
+  components: {
+    SuccessRateGraph,
+    ScatterGraphics, TestingSystem, ConfigurationList, NewConfiguration, Bar},
   created() {
     this.getConfigs();
-    this.getProfilesIds();
     this.debounce();
   },
   data() {
     return {
       options: {
         responsive: true,
-        maintainAspectRatio: false
+        maintainAspectRatio: false,
+        scales: {
+          x: {
+            display: true,
+            title: {
+              display: true,
+              text: 'Response codes',
+              color: '#911',
+              padding: {top: 20, left: 0, right: 0, bottom: 0}
+            }
+          },
+          y: {
+            display: true,
+            title: {
+              display: true,
+              text: 'Count',
+              color: '#191',
+              padding: {top: 30, left: 0, right: 0, bottom: 0}
+            }
+          }
+        }
       },
       showGraph: false,
       key: 0,
@@ -83,8 +108,7 @@ export default {
     }
   },
   methods: {
-    ...mapActions(['getConfigs', 'getProfilesIds', 'getRequestsTime', 'getRespEntry']),
-    ...mapGetters(['getRequestCount']),
+    ...mapActions(['getConfigs', 'getRespEntry']),
 
     debounce() {
       this.getRespEntry().then(

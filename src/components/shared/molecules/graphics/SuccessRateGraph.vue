@@ -10,7 +10,7 @@ import {mapActions} from "vuex";
 ChartJS.register(CategoryScale, LinearScale, PointElement, BarElement, Title, Tooltip, Legend)
 
 export default {
-  name: "ScatterGraphics",
+  name: "SuccessRateGraph",
   components: { Scatter },
   data() {
     return {
@@ -32,7 +32,7 @@ export default {
             display: true,
             title: {
               display: true,
-              text: 'Avg. resp time in ms',
+              text: 'Percent of success',
               color: '#191',
               padding: {top: 30, left: 0, right: 0, bottom: 0}
             }
@@ -41,7 +41,7 @@ export default {
       },
       datasets: {
         datasets : [{
-          label: 'Time spent',
+          label: 'Success rate',
           fill: false,
           borderColor: '#7acbf9',
           backgroundColor: '#7acbf9',
@@ -62,14 +62,12 @@ export default {
     }
   },
   methods: {
-    ...mapActions(['getTimeEntry']),
+    ...mapActions(['getSuccessEntry']),
     debounce() {
-      this.getTimeEntry().then(
-          resp => {
-            this.datasets.datasets[0].data = resp
-            setTimeout(() => {this.debounce()}, 5000);
-          }
-      )
+      this.getSuccessEntry().then((resp) => {
+        this.datasets.datasets[0].data = resp
+        setTimeout(() => {this.debounce()}, 5000);
+      })
     }
   }
 }

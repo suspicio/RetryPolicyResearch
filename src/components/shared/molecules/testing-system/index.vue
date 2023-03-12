@@ -41,7 +41,7 @@ export default {
     startTesting() {
       if (this.getSelectedConfigs() !== null) {
         this.isRunning = true;
-        this.setTestingState("run")
+        this.setTestingState("start")
       } else {
        toast.error("Testing Configuration not Selected")
       }
@@ -54,7 +54,7 @@ export default {
 
     unpauseTesting() {
       this.isPaused = false;
-      this.setTestingState("run")
+      this.setTestingState("start")
     },
 
     stopTesting() {
