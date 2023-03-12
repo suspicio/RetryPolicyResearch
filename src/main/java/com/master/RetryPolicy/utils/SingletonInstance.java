@@ -9,10 +9,6 @@ import java.util.List;
 import java.util.UUID;
 
 public class SingletonInstance {
-    public static Integer currentRequests = 0;
-    public static Integer currentOutRequests = 0;
-    public static Integer currentRetryRequests = 0;
-    public static Integer currentOutRetryRequests = 0;
     public static TestingConfiguration testingConfiguration = null;
     public static TestingStates testingState = TestingStates.STOP;
     public static TestingStates lastTestingState = TestingStates.STOP;
@@ -25,5 +21,9 @@ public class SingletonInstance {
             return prevTestingState == TestingStates.STOP;
         }
         return false;
+    }
+
+    public static @NotNull UUID getRandomUUID() {
+        return listOfAllIds.get((int) Math.floor(Math.random() * listOfAllIds.size()));
     }
 }
