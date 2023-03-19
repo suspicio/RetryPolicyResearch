@@ -84,8 +84,8 @@ public class TestingStats {
     public void addAverageTimeForRequestsPerSecondByTime(Integer time, Double responseTime) {
         Optional<Pair<Integer, Double>> pairOfCountAndTotalTime = Optional.ofNullable(this.averageTimeForRequestsPerSecondByTime
                 .putIfAbsent(time, Pair.of(1, responseTime)));
-        this.averageTimeForRequestsPerSecondByTime.put(time, Pair.of(pairOfCountAndTotalTime.orElse(Pair.of(1, responseTime)).getFirst(),
-                pairOfCountAndTotalTime.orElse(Pair.of(1, responseTime)).getSecond()));
+        this.averageTimeForRequestsPerSecondByTime.put(time, Pair.of(pairOfCountAndTotalTime.orElse(Pair.of(0, responseTime)).getFirst() + 1,
+                pairOfCountAndTotalTime.orElse(Pair.of(0, responseTime)).getSecond()));
     }
 
     public void setSuccessRateOfRequestsBySeconds(HashMap<Integer, Pair<Integer, Integer>> successRateOfRequestsBySeconds) {
@@ -95,7 +95,15 @@ public class TestingStats {
     public void addSuccessRateOfRequestsBySeconds(Integer time, Boolean isSuccess) {
         Optional<Pair<Integer, Integer>> pairOfCountAndSuccess = Optional.ofNullable(this.successRateOfRequestsBySeconds
                 .putIfAbsent(time, Pair.of(1, isSuccess ? 1 : 0)));
-        this.successRateOfRequestsBySeconds.put(time, Pair.of(pairOfCountAndSuccess.orElse(Pair.of(1, isSuccess ? 1 : 0)).getFirst(),
-                pairOfCountAndSuccess.orElse(Pair.of(1, isSuccess ? 1 : 0)).getSecond()));
+        this.successRateOfRequestsBySeconds.put(time, Pair.of(pairOfCountAndSuccess.orElse(Pair.of(0, isSuccess ? 1 : 0)).getFirst() + 1,
+                pairOfCountAndSuccess.orElse(Pair.of(0, isSuccess ? 1 : 0)).getSecond()));
+    }
+
+    public void clear() {
+        currentRequests = 0;
+        currentRetryRequests = 0;
+        responseCodes.clear();
+        averageTimeForRequestsPerSecondByTime.clear();
+        successRateOfRequestsBySeconds.clear();
     }
 }

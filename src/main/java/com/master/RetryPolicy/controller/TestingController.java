@@ -11,6 +11,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.time.Instant;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 
@@ -28,6 +29,9 @@ public class TestingController {
         if (SingletonInstance.testingConfiguration == null) {
             return new ResponseEntity<>(HttpStatus.PARTIAL_CONTENT);
         }
+
+        testingControlService.resetTestingStats();
+        SingletonInstance.testingStartTime = Instant.now();
         SingletonInstance.testingState = TestingStates.START;
         testingControlService.testingController();
         return new ResponseEntity<>(HttpStatus.OK);

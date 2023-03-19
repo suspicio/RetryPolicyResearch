@@ -17,15 +17,18 @@ import org.springframework.scheduling.annotation.AsyncResult;
 import org.springframework.scheduling.annotation.EnableAsync;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.ClientResponse;
+import org.springframework.web.reactive.function.client.ExchangeStrategies;
 import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Mono;
 import reactor.netty.http.client.HttpClient;
+import reactor.netty.resources.ConnectionProvider;
 import reactor.util.function.Tuple2;
 import reactor.util.function.Tuples;
 
 import java.time.Duration;
 import java.time.Instant;
 import java.util.UUID;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeoutException;
 
@@ -38,23 +41,30 @@ public class ProfileRequesterService {
 
     private final String apiUrl = "http://localhost:8080";
 
-    private final TestingStats testingStats;
-
     @Autowired
     private RetryProfileRequesterService retryProfileRequesterService;
 
     @Autowired
     public ProfileRequesterService(WebClient.Builder webClientBuilder) {
         this.webClient = webClientBuilder.clientConnector(
-                new ReactorClientHttpConnector(HttpClient.create().responseTimeout(Duration.ofSeconds(20)))
-        )
+                        new ReactorClientHttpConnector(HttpClient.create(ConnectionProvider.create("extendedPool", 10000)).responseTimeout(Duration.ofSeconds(20)))
+                )
+                .exchangeStrategies(ExchangeStrategies.builder()
+                        .codecs(configurer -> configurer.defaultCodecs().maxInMemorySize(16 * 1024 * 1024)).build())
                 .codecs(configurer -> configurer.defaultCodecs().jackson2JsonEncoder(new Jackson2JsonEncoder()))
                 .build();
-        this.testingStats = new TestingStats();
     }
 
-    public Future<TestingStats> getTestingStats() {
-        return new AsyncResult<>(testingStats);
+    public void resetTestingStats() {
+        retryProfileRequesterService.resetTestingStats();
+    }
+
+    public Future<TestingStats> getTestingStats() throws ExecutionException, InterruptedException {
+        return new AsyncResult<>(retryProfileRequesterService.getTestingStats().get());
+    }
+
+    public void addStats(Integer initialTime, Duration duration, Integer statusCode, Boolean isRetry) {
+        retryProfileRequesterService.addStats(initialTime, duration, statusCode, isRetry);
     }
 
     public void start(int requestPerSecond) {
@@ -78,11 +88,16 @@ public class ProfileRequesterService {
                 final int requestType = (int) Math.floor(Math.random() * operationsType);
 
                 switch (requestType) {
-                    case 0: getProfileCount();
-                    case 1: getProfile();
-                    case 2: updateProfile();
-                    case 3: deleteProfile();
-                    case 4: createProfile();
+                    case 0:
+                        getProfileCount();
+                    case 1:
+                        getProfile();
+                    case 2:
+                        updateProfile();
+                    case 3:
+                        deleteProfile();
+                    case 4:
+                        createProfile();
                     default:
                         count[0]++;
                         SetTimeout.setTimeout(() -> count[0]--, 1000);
@@ -108,73 +123,150 @@ public class ProfileRequesterService {
                 .onErrorResume(error -> {
                     if (error instanceof TimeoutException) {
                         Duration duration = Duration.between(start, Instant.now());
-                        System.out.println("API call timed out after " + duration.toMillis() + "ms");
-                        retryProfileRequesterService.getRetryProfile();
+                        addStats(Duration.between(SingletonInstance.testingStartTime, start).toSecondsPart(),
+                                duration, 504, false);
+                        SetTimeout.setTimeout(retryProfileRequesterService::getRetryProfile, 1000);
                     }
                     return Mono.error(error);
-                });;
+                });
 
         responseMono.subscribe(tuple -> {
             ClientResponse response = tuple.getT1();
-            JsonNode jsonNode = tuple.getT2();
             HttpStatus statusCode = response.statusCode();
             Duration duration = Duration.between(start, Instant.now());
-            System.out.println("Response code: " + statusCode);
-            System.out.println("Response time: " + duration.toMillis() + "ms");
-            System.out.println("JsonNode: " + jsonNode.toString());
+            addStats(Duration.between(SingletonInstance.testingStartTime, start).toSecondsPart(),
+                    duration, statusCode.value(), false);
         });
     }
 
     public void createProfile() {
-        System.out.println("Started UUID Creation");
-        webClient.post()
+        Instant start = Instant.now();
+
+        Mono<Tuple2<ClientResponse, UUID>> responseMono = webClient.post()
                 .uri(apiUrl + "/profile")
                 .header("is-retry", "false")
                 .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
-                .bodyValue(ProfileGenerator.generateRandomProfile())
+                .bodyValue(ProfileGenerator.generateRandomProfile().toJSON())
                 .accept(MediaType.APPLICATION_JSON)
-                .retrieve()
-                .bodyToMono(UUID.class)
-                .subscribe(profileTableResp -> {
-                    System.out.println("Received response UUID: " + profileTableResp);
+                .exchangeToMono(response -> {
+                    Mono<UUID> bodyMono = response.bodyToMono(UUID.class);
+                    return bodyMono.map(body -> Tuples.of(response, body));
+                })
+                .onErrorResume(error -> {
+                    if (error instanceof TimeoutException) {
+                        Duration duration = Duration.between(start, Instant.now());
+                        addStats(Duration.between(SingletonInstance.testingStartTime, start).toSecondsPart(),
+                                duration, 504, false);
+                        SetTimeout.setTimeout(retryProfileRequesterService::createRetryProfile, 1000);
+                    }
+                    return Mono.error(error);
                 });
+
+        responseMono.subscribe(tuple -> {
+            ClientResponse response = tuple.getT1();
+            UUID uuid = tuple.getT2();
+            HttpStatus statusCode = response.statusCode();
+            Duration duration = Duration.between(start, Instant.now());
+            addStats(Duration.between(SingletonInstance.testingStartTime, start).toSecondsPart(),
+                    duration, statusCode.value(), false);
+            SingletonInstance.listOfAllIds.add(uuid);
+        });
     }
 
     public void updateProfile() {
-        webClient.put()
+        Instant start = Instant.now();
+
+        UUID randomUUID = UUID.randomUUID();
+
+        Mono<Tuple2<ClientResponse, Boolean>> responseMono = webClient.put()
                 .uri(apiUrl + "/profile")
                 .header("is-retry", "false")
                 .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
-                .bodyValue(ProfileGenerator.generateRandomProfileWithID(SingletonInstance.getRandomUUID()))
+                .bodyValue(ProfileGenerator.generateRandomProfileWithID(randomUUID).toJSON())
                 .accept(MediaType.APPLICATION_JSON)
-                .retrieve()
-                .bodyToMono(Boolean.class)
-                .subscribe(profileTableResp -> {
-                    System.out.println("Received response: " + profileTableResp);
+                .exchangeToMono(response -> {
+                    Mono<Boolean> bodyMono = response.bodyToMono(Boolean.class);
+                    return bodyMono.map(body -> Tuples.of(response, body));
+                })
+                .onErrorResume(error -> {
+                    if (error instanceof TimeoutException) {
+                        Duration duration = Duration.between(start, Instant.now());
+                        addStats(Duration.between(SingletonInstance.testingStartTime, start).toSecondsPart(),
+                                duration, 504, false);
+                        SetTimeout.setTimeout(() -> retryProfileRequesterService.updateRetryProfile(randomUUID), 1000);
+                    }
+                    return Mono.error(error);
                 });
+
+        responseMono.subscribe(tuple -> {
+            ClientResponse response = tuple.getT1();
+            HttpStatus statusCode = response.statusCode();
+            Duration duration = Duration.between(start, Instant.now());
+            addStats(Duration.between(SingletonInstance.testingStartTime, start).toSecondsPart(),
+                    duration, statusCode.value(), false);
+        });
     }
 
     public void deleteProfile() {
-        webClient.delete()
-                .uri(apiUrl + "/profile/{id}", SingletonInstance.getRandomUUID())
+        Instant start = Instant.now();
+
+        UUID randomUUID = SingletonInstance.getRandomUUID();
+
+        Mono<Tuple2<ClientResponse, Boolean>> responseMono = webClient.delete()
+                .uri(apiUrl + "/profile/{id}", randomUUID)
                 .header("is-retry", "false")
                 .accept(MediaType.APPLICATION_JSON)
-                .retrieve()
-                .bodyToMono(Boolean.class)
-                .subscribe(profileTableResp -> {
-                    System.out.println("Received response: " + profileTableResp);
+                .exchangeToMono(response -> {
+                    Mono<Boolean> bodyMono = response.bodyToMono(Boolean.class);
+                    return bodyMono.map(body -> Tuples.of(response, body));
+                })
+                .onErrorResume(error -> {
+                    if (error instanceof TimeoutException) {
+                        Duration duration = Duration.between(start, Instant.now());
+                        addStats(Duration.between(SingletonInstance.testingStartTime, start).toSecondsPart(),
+                                duration, 504, false);
+                        SetTimeout.setTimeout(() -> retryProfileRequesterService.deleteRetryProfile(randomUUID), 1000);
+                    }
+                    return Mono.error(error);
                 });
+
+        responseMono.subscribe(tuple -> {
+            ClientResponse response = tuple.getT1();
+            HttpStatus statusCode = response.statusCode();
+            Duration duration = Duration.between(start, Instant.now());
+            addStats(Duration.between(SingletonInstance.testingStartTime, start).toSecondsPart(),
+                    duration, statusCode.value(), false);
+            SingletonInstance.listOfAllIds.remove(randomUUID);
+        });
     }
 
     public void getProfileCount() {
-        webClient.get()
+        Instant start = Instant.now();
+
+        Mono<Tuple2<ClientResponse, Long>> responseMono = webClient.get()
                 .uri(apiUrl + "/profile/count")
                 .header("is-retry", "false")
                 .accept(MediaType.APPLICATION_JSON)
-                .retrieve()
-                .bodyToMono(Long.class)
-                .subscribe(profileTableResp -> {
-                    System.out.println("Received response: " + profileTableResp);
+                .exchangeToMono(response -> {
+                    Mono<Long> bodyMono = response.bodyToMono(Long.class);
+                    return bodyMono.map(body -> Tuples.of(response, body));
+                })
+                .onErrorResume(error -> {
+                    if (error instanceof TimeoutException) {
+                        Duration duration = Duration.between(start, Instant.now());
+                        addStats(Duration.between(SingletonInstance.testingStartTime, start).toSecondsPart(),
+                                duration, 504, false);
+                        SetTimeout.setTimeout(retryProfileRequesterService::getRetryProfileCount, 1000);
+                    }
+                    return Mono.error(error);
                 });
+
+        responseMono.subscribe(tuple -> {
+            ClientResponse response = tuple.getT1();
+            HttpStatus statusCode = response.statusCode();
+            Duration duration = Duration.between(start, Instant.now());
+            addStats(Duration.between(SingletonInstance.testingStartTime, start).toSecondsPart(),
+                    duration, statusCode.value(), false);
+        });
     }
 }

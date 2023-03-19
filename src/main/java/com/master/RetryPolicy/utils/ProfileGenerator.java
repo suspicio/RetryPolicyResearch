@@ -18,9 +18,16 @@ public class ProfileGenerator {
         int randomDay = random.nextInt(29) + 1;
         int randomMonth = random.nextInt(12) + 1;
         int randomYear = random.nextInt(50) + 1950;
-        String randomBirthday = Integer.toString(randomDay) + '/' + randomMonth + '/' + randomYear;
+        String day = Integer.toString(randomDay);
+        if (day.length() == 1)
+            day = "0" + day;
+        String month = Integer.toString(randomMonth);
+        if (month.length() == 1)
+            month = "0" + month;
+        String year = Integer.toString(randomYear);
+        String randomBirthday = day + '-' + month + '-' + year;
 
-        return new Profile(UUID.fromString("00000000-0000-0000-0000-000000000000"), randomFirstName, randomLastName, randomEmail, randomBirthday);
+        return new Profile(UUID.randomUUID(), randomFirstName, randomLastName, randomEmail, randomBirthday);
     }
 
     public static @NotNull Profile generateRandomProfileWithID(UUID id) {
