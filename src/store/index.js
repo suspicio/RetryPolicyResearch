@@ -13,7 +13,10 @@ const store = createStore({
         selectedConfig: null,
         testingState: "stop",
         requestTimeData: {},
-        totalRequestCount: {}
+        responseCodes: {},
+        successRateData: {},
+        requests: 0,
+        retryRequests: 0,
     },
 
     mutations: {
@@ -89,16 +92,43 @@ const store = createStore({
             })
         },
 
-        getTimeEntry() {
-            return {}
+        gatherStats({ state }) {
+            axios.get(process.env.VUE_APP_API_URL + '/testing/stats').then((resp) => {
+                state.responseCodes = resp.data.responseCodes;
+                state.requestTimeData = resp.data.averageTimeForRequestsPerSecondByTime;
+                state.successRateData = resp.data.successRateOfRequestsBySeconds;
+                state.requests = resp.data.currentRequests;
+                state.retryRequest = resp.data.currentRetryRequests;
+            })
         },
 
-        getSuccessEntry() {
-            return {}
+        getRequests({ state }) {
+            return {
+                requests: state.requests,
+                retryRequests: state.retryRequests
+            }
         },
 
-        getRespEntry() {
-            return {}
+        getTimeEntry({ state }) {
+            return Object.keys(state.requestTimeData).map((key) => {
+                return {
+                    "x": key,
+                    "y": state.requestTimeData[key].second / state.requestTimeData[key].first
+                }
+            })
+        },
+
+        getSuccessEntry({ state }) {
+            return Object.keys(state.requestTimeData).map((key) => {
+                return {
+                    "x": key,
+                    "y": (100.0 * state.successRateData[key].second) / state.successRateData[key].first
+                }
+            })
+        },
+
+        getRespEntry({ state }) {
+            return state.responseCodes
         }
     },
 

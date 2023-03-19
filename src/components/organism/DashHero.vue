@@ -2,6 +2,8 @@
   <div class="wrapper">
     <div class="header">
       <h1>Retry Policy Testing Environment</h1>
+      <div>Request: {{requests}}</div>
+      <div>Retry request: {{retryRequests}}</div>
     </div>
     <div class="wrapper-top-element">
       <div class="graph-wrapper">
@@ -96,7 +98,9 @@ export default {
             data: []
           }
         ]
-      }
+      },
+      requests: 0,
+      retryRequests: 0
     }
   },
   watch: {
@@ -108,9 +112,16 @@ export default {
     }
   },
   methods: {
-    ...mapActions(['getConfigs', 'getRespEntry']),
+    ...mapActions(['getConfigs', 'getRespEntry', 'gatherStats', 'getRequests']),
 
     debounce() {
+      this.gatherStats();
+
+      const reqs = this.getRequests();
+
+      this.requests = reqs.requests;
+      this.retryRequests = reqs.retryRequests;
+
       this.getRespEntry().then(
           resp => {
             const reqs = resp
