@@ -30,16 +30,17 @@ public class ProfileTableService {
 
     public Future<UUID> createProfile(Profile profile) {
         long startTime = System.nanoTime();
+        System.out.println(profile.toString());
         try {
             profileTableRepository.save(profile);
             long endTime = System.nanoTime();
             long responseTime = (endTime - startTime) / 1000000;
-            System.out.println("Response time Save: " + responseTime + "ms");
+            //System.out.println("Response time Save: " + responseTime + "ms");
             return new AsyncResult<>(profile.getId());
         } catch (Exception e) {
             long endTime = System.nanoTime();
             long responseTime = (endTime - startTime) / 1000000;
-            System.out.println("Response time Save: " + responseTime + "ms");
+            //System.out.println("Response time Save: " + responseTime + "ms");
             System.err.println(e);
             return null;
         }
@@ -55,7 +56,7 @@ public class ProfileTableService {
         }
         long endTime = System.nanoTime();
         long responseTime = (endTime - startTime) / 1000000;
-        System.out.println("Response time COUNT: " + responseTime + "ms\nResponse: " + count);
+        //System.out.println("Response time COUNT: " + responseTime + "ms\nResponse: " + count);
         return new AsyncResult<>(count);
     }
 
@@ -64,17 +65,17 @@ public class ProfileTableService {
         Iterable<Profile> resp = null;
         final JsonNode[] respJson = new JsonNode[1];
         try {
-            System.out.println("ID: " + id);
+            //System.out.println("ID: " + id);
             resp = profileTableRepository.findProfileById(id);
             long endTime = System.nanoTime();
             long responseTime = (endTime - startTime) / 1000000;
-            System.out.println("Response time Read: " + responseTime);
+            //System.out.println("Response time Read: " + responseTime);
             Consumer<Profile> collectInner = profile -> respJson[0] = profile.toJSON();
             resp.forEach(collectInner);
         } catch (Exception e) {
             long endTime = System.nanoTime();
             long responseTime = (endTime - startTime) / 1000000;
-            System.out.println("Response time Read: " + responseTime);
+            //System.out.println("Response time Read: " + responseTime);
             System.err.println(e);
         }
 
@@ -106,20 +107,20 @@ public class ProfileTableService {
             DefaultRow df = profileTableRepository.updateProfile(id, profile.getName(), profile.getSurname(), profile.getEmail(), profile.getBirthday());
             long endTime = System.nanoTime();
             long responseTime = (endTime - startTime) / 1000000;
-            System.out.print("Response time Update: " + responseTime + "ms\nResponse: ");
+            //System.out.print("Response time Update: " + responseTime + "ms\nResponse: ");
             boolean response = true;
             for (int i = 0; i < ((Row) df).getColumnDefinitions().size(); i++) {
                 String columnName = ((Row) df).getColumnDefinitions().get(i).getName().toString();
                 Object columnValue = df.getObject(i);
                 assert columnValue != null;
                 response = Boolean.parseBoolean(columnValue.toString());
-                System.out.println(columnName + ": " + columnValue);
+                //System.out.println(columnName + ": " + columnValue);
             }
             return new AsyncResult<>(response);
         } catch (Exception e) {
             long endTime = System.nanoTime();
             long responseTime = (endTime - startTime) / 1000000;
-            System.out.println("Response time Update: " + responseTime + "ms");
+            //System.out.println("Response time Update: " + responseTime + "ms");
             System.err.println(e);
             return new AsyncResult<>(false);
         }
@@ -136,7 +137,7 @@ public class ProfileTableService {
         }
         long endTime = System.nanoTime();
         long responseTime = (endTime - startTime) / 1000000;
-        System.out.print("Response time Read: " + responseTime);
+        //System.out.print("Response time Read: " + responseTime);
 
         return new AsyncResult<>(resp);
     }

@@ -47,9 +47,12 @@ public class ProfileTableController {
 
     @PostMapping("/profile")
     public ResponseEntity<UUID> createProfile(@RequestBody Profile profile) throws ExecutionException, InterruptedException {
+        System.out.println("Profile created");
         Future<UUID> newProfileID = profileTableService.createProfile(profile);
         UUID newProfileIDResp = newProfileID.get();
+        System.out.println("Profile created2");
         if (newProfileIDResp != null) {
+            System.out.println("Profile created3");
             return new ResponseEntity<>(newProfileIDResp, HttpStatus.CREATED);
         } else {
             return new ResponseEntity<>(null, HttpStatus.GATEWAY_TIMEOUT);
@@ -63,7 +66,7 @@ public class ProfileTableController {
         if (updatedProfileSuccess) {
             return new ResponseEntity<>(true, HttpStatus.OK);
         } else {
-            return new ResponseEntity<>(false, HttpStatus.GATEWAY_TIMEOUT);
+            return new ResponseEntity<>(false, HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
 
