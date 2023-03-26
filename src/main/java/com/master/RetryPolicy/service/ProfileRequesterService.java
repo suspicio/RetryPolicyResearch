@@ -6,6 +6,7 @@ import com.master.RetryPolicy.entity.TestingStats;
 import com.master.RetryPolicy.utils.ProfileGenerator;
 import com.master.RetryPolicy.utils.SetTimeout;
 import com.master.RetryPolicy.utils.SingletonInstance;
+import io.netty.handler.timeout.ReadTimeoutException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
@@ -30,7 +31,6 @@ import java.time.Instant;
 import java.util.UUID;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
-import java.util.concurrent.TimeoutException;
 
 @EnableAsync
 @Async
@@ -47,10 +47,10 @@ public class ProfileRequesterService {
     @Autowired
     public ProfileRequesterService(WebClient.Builder webClientBuilder) {
         this.webClient = webClientBuilder.clientConnector(
-                        new ReactorClientHttpConnector(HttpClient.create(ConnectionProvider.create("extendedPool", 10000)).responseTimeout(Duration.ofSeconds(20)))
+                        new ReactorClientHttpConnector(HttpClient.create(ConnectionProvider.create("extendedPool", 1500)).responseTimeout(Duration.ofSeconds(2)))
                 )
                 .exchangeStrategies(ExchangeStrategies.builder()
-                        .codecs(configurer -> configurer.defaultCodecs().maxInMemorySize(16 * 1024 * 1024)).build())
+                        /*.codecs(configurer -> configurer.defaultCodecs().maxInMemorySize(16 * 1024 * 1024))*/.build())
                 .codecs(configurer -> configurer.defaultCodecs().jackson2JsonEncoder(new Jackson2JsonEncoder()))
                 .build();
     }
@@ -63,11 +63,11 @@ public class ProfileRequesterService {
         return new AsyncResult<>(retryProfileRequesterService.getTestingStats().get());
     }
 
-    public void addStats(Integer initialTime, Duration duration, Integer statusCode, Boolean isRetry) {
+    public void addStats(Long initialTime, Duration duration, Integer statusCode, Boolean isRetry) {
         retryProfileRequesterService.addStats(initialTime, duration, statusCode, isRetry);
     }
 
-    public void start(int requestPerSecond) {
+    public void start(int requestsPerSecond) {
         final int[] count = {0};
         while (SingletonInstance.testingState == TestingStates.START || SingletonInstance.testingState == TestingStates.PAUSE) {
             try {
@@ -75,12 +75,12 @@ public class ProfileRequesterService {
                     Thread.sleep(1000);
                     continue;
                 }
-                if (count[0] >= requestPerSecond) {
+                if (count[0] >= requestsPerSecond) {
                     Thread.sleep(100);
                     continue;
                 }
 
-                int operationsType = 5;
+                int operationsType = 6;
 
                 if (SingletonInstance.testingConfiguration.getCountLimit() <= SingletonInstance.listOfAllIds.size())
                     operationsType = 4;
@@ -97,6 +97,8 @@ public class ProfileRequesterService {
                     case 3:
                         deleteProfile();
                     case 4:
+                        createProfile();
+                    case 5:
                         createProfile();
                     default:
                         count[0]++;
@@ -121,12 +123,18 @@ public class ProfileRequesterService {
                     return bodyMono.map(body -> Tuples.of(response, body));
                 })
                 .onErrorResume(error -> {
-                    if (error instanceof TimeoutException) {
+
+                    if (error.getMessage().contains("ReadTimeoutException")) {
+                        System.out.println("Timeout happened");
                         Duration duration = Duration.between(start, Instant.now());
-                        addStats(Duration.between(SingletonInstance.testingStartTime, start).toSecondsPart(),
+                        addStats(Duration.between(SingletonInstance.testingStartTime, start).toSeconds(),
                                 duration, 504, false);
                         SetTimeout.setTimeout(retryProfileRequesterService::getRetryProfile, 1000);
+                        return Mono.error(error);
                     }
+                    Duration duration = Duration.between(start, Instant.now());
+                    addStats(Duration.between(SingletonInstance.testingStartTime, start).toSeconds(),
+                            duration, 200, false);
                     return Mono.error(error);
                 });
 
@@ -134,7 +142,7 @@ public class ProfileRequesterService {
             ClientResponse response = tuple.getT1();
             HttpStatus statusCode = response.statusCode();
             Duration duration = Duration.between(start, Instant.now());
-            addStats(Duration.between(SingletonInstance.testingStartTime, start).toSecondsPart(),
+            addStats(Duration.between(SingletonInstance.testingStartTime, start).toSeconds(),
                     duration, statusCode.value(), false);
         });
     }
@@ -153,12 +161,19 @@ public class ProfileRequesterService {
                     return bodyMono.map(body -> Tuples.of(response, body));
                 })
                 .onErrorResume(error -> {
-                    if (error instanceof TimeoutException) {
+
+                    if (error.getMessage().contains("ReadTimeoutException")) {
+                        System.out.println("Timeout happened");
                         Duration duration = Duration.between(start, Instant.now());
-                        addStats(Duration.between(SingletonInstance.testingStartTime, start).toSecondsPart(),
+                        addStats(Duration.between(SingletonInstance.testingStartTime, start).toSeconds(),
                                 duration, 504, false);
                         SetTimeout.setTimeout(retryProfileRequesterService::createRetryProfile, 1000);
+                        return Mono.error(error);
                     }
+                    Duration duration = Duration.between(start, Instant.now());
+                    addStats(Duration.between(SingletonInstance.testingStartTime, start).toSeconds(),
+                            duration, 200, false);
+
                     return Mono.error(error);
                 });
 
@@ -167,7 +182,7 @@ public class ProfileRequesterService {
             UUID uuid = tuple.getT2();
             HttpStatus statusCode = response.statusCode();
             Duration duration = Duration.between(start, Instant.now());
-            addStats(Duration.between(SingletonInstance.testingStartTime, start).toSecondsPart(),
+            addStats(Duration.between(SingletonInstance.testingStartTime, start).toSeconds(),
                     duration, statusCode.value(), false);
             SingletonInstance.listOfAllIds.add(uuid);
         });
@@ -189,12 +204,18 @@ public class ProfileRequesterService {
                     return bodyMono.map(body -> Tuples.of(response, body));
                 })
                 .onErrorResume(error -> {
-                    if (error instanceof TimeoutException) {
+
+                    if (error.getMessage().contains("ReadTimeoutException")) {
+                        System.out.println("Timeout happened");
                         Duration duration = Duration.between(start, Instant.now());
-                        addStats(Duration.between(SingletonInstance.testingStartTime, start).toSecondsPart(),
+                        addStats(Duration.between(SingletonInstance.testingStartTime, start).toSeconds(),
                                 duration, 504, false);
                         SetTimeout.setTimeout(() -> retryProfileRequesterService.updateRetryProfile(randomUUID), 1000);
+                        return Mono.error(error);
                     }
+                    Duration duration = Duration.between(start, Instant.now());
+                    addStats(Duration.between(SingletonInstance.testingStartTime, start).toSeconds(),
+                            duration, 200, false);
                     return Mono.error(error);
                 });
 
@@ -202,7 +223,7 @@ public class ProfileRequesterService {
             ClientResponse response = tuple.getT1();
             HttpStatus statusCode = response.statusCode();
             Duration duration = Duration.between(start, Instant.now());
-            addStats(Duration.between(SingletonInstance.testingStartTime, start).toSecondsPart(),
+            addStats(Duration.between(SingletonInstance.testingStartTime, start).toSeconds(),
                     duration, statusCode.value(), false);
         });
     }
@@ -221,12 +242,19 @@ public class ProfileRequesterService {
                     return bodyMono.map(body -> Tuples.of(response, body));
                 })
                 .onErrorResume(error -> {
-                    if (error instanceof TimeoutException) {
+
+                    if (error.getMessage().contains("ReadTimeoutException")) {
+                        System.out.println("Timeout happened");
                         Duration duration = Duration.between(start, Instant.now());
-                        addStats(Duration.between(SingletonInstance.testingStartTime, start).toSecondsPart(),
+                        addStats(Duration.between(SingletonInstance.testingStartTime, start).toSeconds(),
                                 duration, 504, false);
                         SetTimeout.setTimeout(() -> retryProfileRequesterService.deleteRetryProfile(randomUUID), 1000);
+                        return Mono.error(error);
                     }
+                    Duration duration = Duration.between(start, Instant.now());
+                    addStats(Duration.between(SingletonInstance.testingStartTime, start).toSeconds(),
+                            duration, 200, false);
+
                     return Mono.error(error);
                 });
 
@@ -234,7 +262,7 @@ public class ProfileRequesterService {
             ClientResponse response = tuple.getT1();
             HttpStatus statusCode = response.statusCode();
             Duration duration = Duration.between(start, Instant.now());
-            addStats(Duration.between(SingletonInstance.testingStartTime, start).toSecondsPart(),
+            addStats(Duration.between(SingletonInstance.testingStartTime, start).toSeconds(),
                     duration, statusCode.value(), false);
             SingletonInstance.listOfAllIds.remove(randomUUID);
         });
@@ -252,12 +280,19 @@ public class ProfileRequesterService {
                     return bodyMono.map(body -> Tuples.of(response, body));
                 })
                 .onErrorResume(error -> {
-                    if (error instanceof TimeoutException) {
+
+                    if (error.getMessage().contains("ReadTimeoutException")) {
+                        System.out.println("Timeout happened");
                         Duration duration = Duration.between(start, Instant.now());
-                        addStats(Duration.between(SingletonInstance.testingStartTime, start).toSecondsPart(),
+                        addStats(Duration.between(SingletonInstance.testingStartTime, start).toSeconds(),
                                 duration, 504, false);
                         SetTimeout.setTimeout(retryProfileRequesterService::getRetryProfileCount, 1000);
+                        return Mono.error(error);
                     }
+                    Duration duration = Duration.between(start, Instant.now());
+                    addStats(Duration.between(SingletonInstance.testingStartTime, start).toSeconds(),
+                            duration, 200, false);
+
                     return Mono.error(error);
                 });
 
@@ -265,7 +300,7 @@ public class ProfileRequesterService {
             ClientResponse response = tuple.getT1();
             HttpStatus statusCode = response.statusCode();
             Duration duration = Duration.between(start, Instant.now());
-            addStats(Duration.between(SingletonInstance.testingStartTime, start).toSecondsPart(),
+            addStats(Duration.between(SingletonInstance.testingStartTime, start).toSeconds(),
                     duration, statusCode.value(), false);
         });
     }

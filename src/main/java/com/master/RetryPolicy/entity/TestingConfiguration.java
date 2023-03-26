@@ -18,26 +18,29 @@ public class TestingConfiguration {
     @PrimaryKey
     private final UUID id;
 
-    private final Integer requestPerSecond;
+    private final Integer requestsPerSecond;
 
     private final String retryPolicyType;
 
     private final Integer countLimit;
 
+    private final Integer baseTimeout;
+
     @PersistenceCreator
-    public TestingConfiguration(UUID id, Integer requestPerSecond, String retryPolicyType, Integer countLimit) {
+    public TestingConfiguration(UUID id, Integer requestsPerSecond, String retryPolicyType, Integer countLimit, Integer baseTimeout) {
         this.id = id;
-        this.requestPerSecond = requestPerSecond;
+        this.requestsPerSecond = requestsPerSecond;
         this.retryPolicyType = retryPolicyType;
         this.countLimit = countLimit;
+        this.baseTimeout = baseTimeout;
     }
 
     public UUID getId() {
         return id;
     }
 
-    public Integer getRequestPerSecond() {
-        return requestPerSecond;
+    public Integer getrequestsPerSecond() {
+        return requestsPerSecond;
     }
 
     public String getRetryPolicyType() {
@@ -47,12 +50,17 @@ public class TestingConfiguration {
         return countLimit;
     }
 
+    public Integer getBaseTimeout() {
+        return baseTimeout;
+    }
+
     @JsonCreator
     public TestingConfiguration(
             @JsonProperty("id") String id,
-            @JsonProperty("request-per-second") String requestPerSecond,
+            @JsonProperty("request-per-second") String requestsPerSecond,
             @JsonProperty("retry-policy-type") String retryPolicyType,
-            @JsonProperty("count-limit") String countLimit
+            @JsonProperty("count-limit") String countLimit,
+            @JsonProperty("base-timeout") String baseTimeout
     ) {
         if (Objects.equals(id, "")) {
             this.id = UUID.randomUUID();
@@ -60,17 +68,19 @@ public class TestingConfiguration {
         else {
             this.id = UUID.fromString(id);
         }
-        this.requestPerSecond = Integer.parseInt(requestPerSecond);
+        this.requestsPerSecond = Integer.parseInt(requestsPerSecond);
         this.retryPolicyType = retryPolicyType;
         this.countLimit = Integer.parseInt(countLimit);
+        this.baseTimeout = Integer.parseInt(baseTimeout);
     }
 
     public String toString() {
         return "TestingConfiguration {\n" +
                 "ID='" + id + "',\n" +
-                "requestsPerSecond='" + requestPerSecond + "',\n" +
+                "requestsPerSecond='" + requestsPerSecond + "',\n" +
                 "retryPolicyType='" + retryPolicyType + "',\n" +
                 "countLimit='" + countLimit + "',\n" +
+                "baseTimeout='" + baseTimeout + "',\n" +
                 "}\n";
     }
 
@@ -78,9 +88,10 @@ public class TestingConfiguration {
         ObjectMapper mapper = new ObjectMapper();
         ObjectNode json = mapper.createObjectNode();
         json.put("id", id.toString());
-        json.put("request-per-second", requestPerSecond);
+        json.put("request-per-second", requestsPerSecond);
         json.put("retry-policy-type", retryPolicyType);
         json.put("count-limit", countLimit);
+        json.put("base-timeout", baseTimeout);
         return json;
     }
 }

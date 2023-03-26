@@ -95,8 +95,8 @@ public class TestingStats {
     public void addSuccessRateOfRequestsBySeconds(Integer time, Boolean isSuccess) {
         Optional<Pair<Integer, Integer>> pairOfCountAndSuccess = Optional.ofNullable(this.successRateOfRequestsBySeconds
                 .putIfAbsent(time, Pair.of(1, isSuccess ? 1 : 0)));
-        this.successRateOfRequestsBySeconds.put(time, Pair.of(pairOfCountAndSuccess.orElse(Pair.of(0, isSuccess ? 1 : 0)).getFirst() + 1,
-                pairOfCountAndSuccess.orElse(Pair.of(0, isSuccess ? 1 : 0)).getSecond()));
+        this.successRateOfRequestsBySeconds.put(time, Pair.of(pairOfCountAndSuccess.orElse(Pair.of(0, 0)).getFirst() + 1,
+                pairOfCountAndSuccess.orElse(Pair.of(0, 0)).getSecond() + (isSuccess ? 1 : 0)));
     }
 
     public void clear() {
