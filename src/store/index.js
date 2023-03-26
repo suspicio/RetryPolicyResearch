@@ -94,11 +94,12 @@ const store = createStore({
 
         gatherStats({ state }) {
             axios.get(process.env.VUE_APP_API_URL + '/testing/stats').then((resp) => {
+                console.log(resp.data)
                 state.responseCodes = resp.data.responseCodes;
                 state.requestTimeData = resp.data.averageTimeForRequestsPerSecondByTime;
                 state.successRateData = resp.data.successRateOfRequestsBySeconds;
                 state.requests = resp.data.currentRequests;
-                state.retryRequest = resp.data.currentRetryRequests;
+                state.retryRequests = resp.data.currentRetryRequests;
             })
         },
 
@@ -113,7 +114,7 @@ const store = createStore({
             return Object.keys(state.requestTimeData).map((key) => {
                 return {
                     "x": key,
-                    "y": state.requestTimeData[key].second / state.requestTimeData[key].first
+                    "y": (state.requestTimeData[key].second) / state.requestTimeData[key].first
                 }
             })
         },

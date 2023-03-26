@@ -14,6 +14,9 @@
             Count Limit: <span>{{configs["count-limit"]}}</span>
           </div>
           <div class="list-element">
+            Base timeout: <span>{{configs["base-timeout"]}}</span>
+          </div>
+          <div class="list-element">
             <v-btn
                 v-if="selectedID !== configs.id"
                    @click="selectConfig(configs.id)"

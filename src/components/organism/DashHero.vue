@@ -117,10 +117,11 @@ export default {
     debounce() {
       this.gatherStats();
 
-      const reqs = this.getRequests();
-
-      this.requests = reqs.requests;
-      this.retryRequests = reqs.retryRequests;
+      this.getRequests().then((resp) => {
+        console.log(resp)
+        this.requests = resp.requests;
+        this.retryRequests = resp.retryRequests;
+      });
 
       this.getRespEntry().then(
           resp => {

@@ -14,6 +14,12 @@
                       type="input"
                       hint="Integer numbers in range [1:100.000]"
                       :rules="countLimitRules"/>
+        <v-text-field label="Base timeout"
+                      v-model="baseTimeout"
+                      validate-on="input"
+                      type="input"
+                      hint="Integer numbers in range [1:5]"
+                      :rules="baseTimeoutRules"/>
         <v-select v-model="retryPolicy" label="Retry Policy" :rules="retryPolicyRules" :items="retryPolicyList" />
         <v-btn :loading="loadingSaveBtn"
                :disabled="loadingSaveBtn"
@@ -49,9 +55,14 @@ export default {
         value => (value && value > 0 && value <= 1000) || 'Please enter only integer in [1-1000] range!'
       ],
       countLimit: 1,
+      baseTimeout: 1,
       countLimitRules: [
         value => !!value || 'Required.',
         value => (value && value > 0 && value <= 100000) || 'Please enter only integer in [1-100000] range!'
+      ],
+      baseTimeoutRules: [
+        value => !!value || 'Required.',
+        value => (value && value > 0 && value <= 5) || 'Please enter only integer in [1-5] range!'
       ],
       retryPolicyList: ["default", "exponential backoff", "fibonacci backoff"],
       retryPolicyRules: [
@@ -75,7 +86,8 @@ export default {
           "id": "",
           "request-per-second": this.requestPerSecond,
           "retry-policy-type": this.retryPolicy,
-          "count-limit": this.countLimit
+          "count-limit": this.countLimit,
+          "base-timeout": this.baseTimeout
         }).then(resp => {
           if (resp) {
             toast.success("Config saved successfully")
