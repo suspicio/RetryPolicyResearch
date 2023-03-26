@@ -13,9 +13,6 @@ public class CounterInterceptor implements HandlerInterceptor {
     public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler) throws Exception {
         // Intercept the request before it gets to the controller
         // and do something with it
-        System.out.println(request);
-        System.out.println(handler);
-        System.out.println(response);
         SingletonInstance.currentRequests++;
         try {
             if (Boolean.parseBoolean(request.getHeader("is-retry"))) {
@@ -23,7 +20,6 @@ public class CounterInterceptor implements HandlerInterceptor {
             }
         } catch (Exception ignored) {}
 
-        System.out.println("Retry request: " +SingletonInstance.currentRetryRequests + "\nCount of curr request: " + SingletonInstance.currentRequests);
         return true;
     }
 
@@ -42,8 +38,5 @@ public class CounterInterceptor implements HandlerInterceptor {
                 SingletonInstance.currentOutRetryRequests--;
             }
         } catch (Exception ignored) {}
-
-        System.out.println("Retry request: " +SingletonInstance.currentOutRetryRequests + "\nCount of out request: " + SingletonInstance.currentOutRequests);
-
     }
 }

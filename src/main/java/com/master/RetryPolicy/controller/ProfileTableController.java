@@ -39,7 +39,7 @@ public class ProfileTableController {
         Future<Long> count = profileTableService.countProfile();
         Long countResp = count.get();
         if (countResp == -1) {
-            return new ResponseEntity<>(countResp, HttpStatus.INTERNAL_SERVER_ERROR);
+            return new ResponseEntity<>(countResp, HttpStatus.OK);
         } else {
             return new ResponseEntity<>(countResp, HttpStatus.OK);
         }
@@ -47,15 +47,12 @@ public class ProfileTableController {
 
     @PostMapping("/profile")
     public ResponseEntity<UUID> createProfile(@RequestBody Profile profile) throws ExecutionException, InterruptedException {
-        System.out.println("Profile created");
         Future<UUID> newProfileID = profileTableService.createProfile(profile);
         UUID newProfileIDResp = newProfileID.get();
-        System.out.println("Profile created2");
         if (newProfileIDResp != null) {
-            System.out.println("Profile created3");
-            return new ResponseEntity<>(newProfileIDResp, HttpStatus.CREATED);
+            return new ResponseEntity<>(newProfileIDResp, HttpStatus.OK);
         } else {
-            return new ResponseEntity<>(null, HttpStatus.GATEWAY_TIMEOUT);
+            return new ResponseEntity<>(null, HttpStatus.OK);
         }
     }
 
@@ -66,7 +63,7 @@ public class ProfileTableController {
         if (updatedProfileSuccess) {
             return new ResponseEntity<>(true, HttpStatus.OK);
         } else {
-            return new ResponseEntity<>(false, HttpStatus.INTERNAL_SERVER_ERROR);
+            return new ResponseEntity<>(false, HttpStatus.OK);
         }
     }
 
@@ -77,7 +74,7 @@ public class ProfileTableController {
         if (deletedProfileSuccess) {
             return new ResponseEntity<>(true, HttpStatus.OK);
         } else {
-            return new ResponseEntity<>(false, HttpStatus.NOT_FOUND);
+            return new ResponseEntity<>(false, HttpStatus.OK);
         }
     }
 }
