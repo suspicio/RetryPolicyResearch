@@ -64,11 +64,11 @@ export default {
         value => !!value || 'Required.',
         value => (value && value > 0 && value <= 5) || 'Please enter only integer in [1-5] range!'
       ],
-      retryPolicyList: ["default", "exponential backoff", "fibonacci backoff"],
+      retryPolicyList: ["simple", "simple delay", "cancel", "incremental delay", "exponential backoff", "fibonacci backoff", "LILD", "LIMD", "MILD", "MIMD"],
       retryPolicyRules: [
           value => !!value || 'Required.'
       ],
-      retryPolicy: "default",
+      retryPolicy: "simple",
       loadingSaveBtn: false,
       loadingResetBtn: false
     };
