@@ -39,7 +39,7 @@ public class TestingConfiguration {
         return id;
     }
 
-    public Integer getrequestsPerSecond() {
+    public Integer getRequestsPerSecond() {
         return requestsPerSecond;
     }
 
@@ -71,7 +71,7 @@ public class TestingConfiguration {
         this.requestsPerSecond = Integer.parseInt(requestsPerSecond);
         this.retryPolicyType = retryPolicyType;
         this.countLimit = Integer.parseInt(countLimit);
-        this.baseTimeout = Integer.parseInt(baseTimeout);
+        this.baseTimeout = Integer.parseInt(baseTimeout) * 1000;
     }
 
     public String toString() {

@@ -1,6 +1,5 @@
 package com.master.RetryPolicy.service;
 
-import ch.qos.logback.core.encoder.EchoEncoder;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.master.RetryPolicy.entity.TestingConfiguration;
 import com.master.RetryPolicy.repository.TestingConfigurationRepository;

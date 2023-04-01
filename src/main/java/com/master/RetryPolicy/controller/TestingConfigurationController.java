@@ -32,6 +32,7 @@ public class TestingConfigurationController {
         if (testingConfiguration.get() == null)
             return new ResponseEntity<>(HttpStatus.NOT_FOUND);
         SingletonInstance.testingConfiguration = testingConfiguration.get();
+        SingletonInstance.adjustableRetryTimeout = SingletonInstance.testingConfiguration.getBaseTimeout();
         return new ResponseEntity<>(HttpStatus.OK);
     }
 

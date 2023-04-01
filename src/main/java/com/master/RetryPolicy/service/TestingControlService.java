@@ -16,7 +16,7 @@ public class TestingControlService {
 
     public void testingController() {
         if (SingletonInstance.stateChanged() && SingletonInstance.testingState == TestingStates.START) {
-            profileRequesterService.start(SingletonInstance.testingConfiguration.getrequestsPerSecond());
+            profileRequesterService.start(SingletonInstance.testingConfiguration.getRequestsPerSecond());
         }
     }
 

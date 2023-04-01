@@ -1,15 +1,12 @@
 package com.master.RetryPolicy.entity;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
-import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.springframework.data.annotation.PersistenceCreator;
 
-import java.time.LocalDate;
-import java.time.format.DateTimeFormatter;
 import java.util.Objects;
 import java.util.UUID;
 
@@ -20,7 +17,6 @@ public class Profile {
     private final String surname;
     private final String email;
 
-    //@JsonFormat(pattern = "dd/mm/yyyy", shape = JsonFormat.Shape.STRING)
     private final String birthday;
 
     @PersistenceCreator
