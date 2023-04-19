@@ -115,7 +115,6 @@ public class ProfileRequesterService {
         }).onErrorResume(error -> {
 
             if (error.getMessage().contains("ReadTimeoutException")) {
-                System.out.println("Timeout happened");
                 Duration duration = Duration.between(start, Instant.now());
                 addStats(Duration.between(SingletonInstance.testingStartTime, start).toSeconds(), duration, 504, false);
                 SetTimeout.setTimeout(() -> retryProfileRequesterService.getRetryProfile(1), SingletonInstance.countDelayBasedOnRetry(1));
@@ -144,7 +143,6 @@ public class ProfileRequesterService {
         }).onErrorResume(error -> {
 
             if (error.getMessage().contains("ReadTimeoutException")) {
-                System.out.println("Timeout happened");
                 Duration duration = Duration.between(start, Instant.now());
                 addStats(Duration.between(SingletonInstance.testingStartTime, start).toSeconds(), duration, 504, false);
                 SetTimeout.setTimeout(() -> retryProfileRequesterService.createRetryProfile(1), SingletonInstance.countDelayBasedOnRetry(1));
@@ -178,7 +176,6 @@ public class ProfileRequesterService {
         }).onErrorResume(error -> {
 
             if (error.getMessage().contains("ReadTimeoutException")) {
-                System.out.println("Timeout happened");
                 Duration duration = Duration.between(start, Instant.now());
                 addStats(Duration.between(SingletonInstance.testingStartTime, start).toSeconds(), duration, 504, false);
                 SetTimeout.setTimeout(() -> retryProfileRequesterService.updateRetryProfile(1, randomUUID), SingletonInstance.countDelayBasedOnRetry(1));
@@ -209,7 +206,6 @@ public class ProfileRequesterService {
         }).onErrorResume(error -> {
 
             if (error.getMessage().contains("ReadTimeoutException")) {
-                System.out.println("Timeout happened");
                 Duration duration = Duration.between(start, Instant.now());
                 addStats(Duration.between(SingletonInstance.testingStartTime, start).toSeconds(), duration, 504, false);
                 SetTimeout.setTimeout(() -> retryProfileRequesterService.deleteRetryProfile(1, randomUUID), SingletonInstance.countDelayBasedOnRetry(1));
@@ -240,7 +236,6 @@ public class ProfileRequesterService {
         }).onErrorResume(error -> {
 
             if (error.getMessage().contains("ReadTimeoutException")) {
-                System.out.println("Timeout happened");
                 Duration duration = Duration.between(start, Instant.now());
                 addStats(Duration.between(SingletonInstance.testingStartTime, start).toSeconds(), duration, 504, false);
                 SetTimeout.setTimeout(() -> retryProfileRequesterService.getRetryProfileCount(1), SingletonInstance.countDelayBasedOnRetry(1));

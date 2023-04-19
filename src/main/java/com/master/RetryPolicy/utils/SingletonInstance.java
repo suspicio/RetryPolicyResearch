@@ -11,8 +11,6 @@ import java.util.UUID;
 
 public class SingletonInstance {
     public static TestingConfiguration testingConfiguration = null;
-    public static Integer lastTimeout = 1000;
-    public static Integer lastTimeout2 = 1000;
     public static Integer adjustableRetryTimeout = 1000;
     public static TestingStates testingState = TestingStates.STOP;
     public static TestingStates lastTestingState = TestingStates.STOP;
@@ -75,13 +73,18 @@ public class SingletonInstance {
             case "cancel":
                 return -1;
             case "incremental delay":
-                return Math.max(testingConfiguration.getBaseTimeout() * retryNumber, standardTimeoutLimit);
+                return Math.min(testingConfiguration.getBaseTimeout() * retryNumber, standardTimeoutLimit);
             case "exponential backoff":
-                return Math.max(testingConfiguration.getBaseTimeout() * (2 << retryNumber), standardTimeoutLimit);
+                return Math.min(testingConfiguration.getBaseTimeout() * (2 << retryNumber), standardTimeoutLimit);
             case "fibonacci backoff":
-                int timeout = lastTimeout + lastTimeout2;
-                lastTimeout2 = lastTimeout;
-                lastTimeout = timeout;
+                int lastTimeout = 0;
+                int lastTimeout2 = 1000;
+                int timeout = 0;
+                for (int i = 0; i < retryNumber; i++) {
+                    timeout = Math.min(lastTimeout + lastTimeout2, standardTimeoutLimit);
+                    lastTimeout = lastTimeout2;
+                    lastTimeout2 = timeout;
+                }
                 return timeout;
             case "LILD":
             case "LIMD":
