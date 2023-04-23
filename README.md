@@ -2,6 +2,7 @@
 
 ## Repository divided to the 3 parts. <br>
 ### [master](https://github.com/suspicio/RetryPolicyResearch): main up to date code <br>
+### [requester](https://github.com/suspicio/RetryPolicyResearch/tree/requester): the client for creating the requests and retry requests
 ### [local](https://github.com/suspicio/RetryPolicyResearch/tree/local): first version of application with self-running producer and consumer <br>
 ### [master-front](https://github.com/suspicio/RetryPolicyResearch/tree/master-front): client application with front-end part <br>
 
@@ -26,7 +27,7 @@ There should similar to next image status<br>
 ![nodetool status](https://user-images.githubusercontent.com/74540366/214797160-4e273315-ff03-4849-8b00-00d1bd2443dd.png)
 <br><br>
 ## Backend run<br>
-To run backend application you need to download [local](https://github.com/suspicio/RetryPolicyResearch/tree/local) or [master](https://github.com/suspicio/RetryPolicyResearch) repository then download graddle libraries.<br>
+To run backend application you need to download [local](https://github.com/suspicio/RetryPolicyResearch/tree/local) or [master](https://github.com/suspicio/RetryPolicyResearch) with [requester](https://github.com/suspicio/RetryPolicyResearch/tree/requester) repository then download graddle libraries.<br>
 
 To run it [java 17+](https://www.oracle.com/java/technologies/javase/jdk15-archive-downloads.html) version is required.<br>
 
